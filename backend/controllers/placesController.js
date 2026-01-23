@@ -1,177 +1,187 @@
 // ============================================
-// PLACES CONTROLLER
+// PLACES CONTROLLER - Mood-based recommendations
 // ============================================
-// Handles all place-related operations
-// - Get places based on mood
-// - Search nearby places
-// - Get place details
-// ============================================
+import googlePlacesService from '../services/googlePlacesService.js';
+import Place from '../models/Place.js';
+import User from '../models/User.js';
 
-// Get places based on mood
-export const getPlacesByMood = (req, res) => {
+/**
+ * Get places by mood
+ * @route GET /api/places/mood
+ * @access Public (with optional auth)
+ */
+export const getPlacesByMood = async (req, res) => {
     try {
-        // Get mood from query parameter (e.g., /api/places?mood=work)
-        const { mood } = req.query;
+        const { mood, lat, lng, radius = 5000 } = req.query;
 
-        // Validate mood parameter
-        if (!mood) {
-            return res.status(400).json({
-                success: false,
-                message: 'Mood parameter is required'
+        // Get places from Google Places API
+        const places = await googlePlacesService.searchByMood(
+            mood,
+            parseFloat(lat),
+            parseFloat(lng),
+            parseInt(radius)
+        );
+
+        // Save search to user history if authenticated
+        if (req.user) {
+            await User.findByIdAndUpdate(req.user._id, {
+                $push: {
+                    searchHistory: {
+                        $each: [{
+                            mood,
+                            location: { lat: parseFloat(lat), lng: parseFloat(lng) },
+                            searchedAt: new Date()
+                        }],
+                        $slice: -50 // Keep only last 50 searches
+                    }
+                }
             });
         }
 
-        // Mock data - Later we'll fetch from database or external API
-        const moodPlaces = {
-            work: [
-                { id: 1, name: 'Cafe Coffee Day', type: 'Cafe', wifi: true, quiet: true },
-                { id: 2, name: 'Starbucks', type: 'Cafe', wifi: true, quiet: true }
-            ],
-            date: [
-                { id: 3, name: 'The Romantic Garden', type: 'Restaurant', ambience: 'romantic' },
-                { id: 4, name: 'Rooftop Lounge', type: 'Lounge', ambience: 'romantic' }
-            ],
-            hangout: [
-                { id: 5, name: 'Fun Zone Arcade', type: 'Entertainment', crowd: 'medium' },
-                { id: 6, name: 'Sports Bar', type: 'Bar', crowd: 'high' }
-            ]
-        };
-
-        // Get places for the requested mood
-        const places = moodPlaces[mood.toLowerCase()] || [];
-
-        res.status(200).json({
+        res.json({
             success: true,
-            message: `Found ${places.length} places for ${mood} mood`,
-            mood: mood,
+            mood,
             count: places.length,
             data: places
         });
-
     } catch (error) {
+        console.error('Error in getPlacesByMood:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to fetch places',
+            message: 'Error fetching places',
             error: error.message
         });
     }
 };
 
-// Get nearby places based on location
-export const getNearbyPlaces = (req, res) => {
+/**
+ * Get nearby places
+ * @route GET /api/places/nearby
+ * @access Public
+ */
+export const getNearbyPlaces = async (req, res) => {
     try {
-        // Get latitude and longitude from query params
-        const { lat, lng, radius } = req.query;
+        const { lat, lng, radius = 5000, type = 'restaurant' } = req.query;
 
-        // Validate required parameters
-        if (!lat || !lng) {
-            return res.status(400).json({
-                success: false,
-                message: 'Latitude and longitude are required'
-            });
-        }
+        const places = await googlePlacesService.getNearbyPlaces(
+            parseFloat(lat),
+            parseFloat(lng),
+            parseInt(radius),
+            type
+        );
 
-        // Mock nearby places data
-        const nearbyPlaces = [
-            { id: 1, name: 'Cafe Near You', distance: '0.5 km', rating: 4.5 },
-            { id: 2, name: 'Street Food Hub', distance: '1.2 km', rating: 4.8 },
-            { id: 3, name: 'Local Restaurant', distance: '2.0 km', rating: 4.2 }
-        ];
-
-        res.status(200).json({
+        res.json({
             success: true,
-            message: 'Nearby places found',
-            location: { latitude: lat, longitude: lng },
-            radius: radius || '5 km',
-            count: nearbyPlaces.length,
-            data: nearbyPlaces
+            count: places.length,
+            data: places
         });
-
     } catch (error) {
+        console.error('Error in getNearbyPlaces:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to fetch nearby places',
+            message: 'Error fetching nearby places',
             error: error.message
         });
     }
 };
 
-// Get details of a specific place
-export const getPlaceDetails = (req, res) => {
+/**
+ * Get place details
+ * @route GET /api/places/:placeId
+ * @access Public
+ */
+export const getPlaceDetails = async (req, res) => {
     try {
-        // Get place ID from URL parameter
-        const { id } = req.params;
+        const { placeId } = req.params;
 
-        // Validate ID
-        if (!id) {
-            return res.status(400).json({
-                success: false,
-                message: 'Place ID is required'
-            });
+        // Try to get from cache/database first
+        let place = await Place.findOne({ placeId });
+
+        // If not in database, fetch from Google API
+        if (!place) {
+            const placeDetails = await googlePlacesService.getPlaceDetails(placeId);
+            
+            // Save to database for future requests
+            place = await Place.findOneAndUpdate(
+                { placeId },
+                placeDetails,
+                { upsert: true, new: true }
+            );
         }
 
-        // Mock place details
-        const placeDetails = {
-            id: id,
-            name: 'Sample Place',
-            type: 'Restaurant',
-            rating: 4.5,
-            reviews: 245,
-            address: '123 Main Street, City',
-            openNow: true,
-            hours: '9:00 AM - 10:00 PM',
-            priceLevel: 2,
-            features: ['WiFi', 'Parking', 'Outdoor Seating'],
-            images: ['image1.jpg', 'image2.jpg']
-        };
-
-        res.status(200).json({
+        res.json({
             success: true,
-            message: 'Place details retrieved',
-            data: placeDetails
+            data: place
         });
-
     } catch (error) {
+        console.error('Error in getPlaceDetails:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to fetch place details',
+            message: 'Error fetching place details',
             error: error.message
         });
     }
 };
 
-// Search places by name or type
-export const searchPlaces = (req, res) => {
+/**
+ * Search places by text
+ * @route GET /api/places/search
+ * @access Public
+ */
+export const searchPlaces = async (req, res) => {
     try {
-        // Get search query from query parameter
-        const { query } = req.query;
+        const { query, lat, lng, radius = 5000 } = req.query;
 
-        // Validate query
-        if (!query) {
-            return res.status(400).json({
-                success: false,
-                message: 'Search query is required'
-            });
-        }
+        const places = await googlePlacesService.textSearch(
+            query,
+            parseFloat(lat),
+            parseFloat(lng),
+            parseInt(radius)
+        );
 
-        // Mock search results
-        const searchResults = [
-            { id: 1, name: 'Pizza Place', type: 'Restaurant', match: 'name' },
-            { id: 2, name: 'Burger Joint', type: 'Fast Food', match: 'name' }
-        ];
-
-        res.status(200).json({
+        res.json({
             success: true,
-            message: `Found ${searchResults.length} results for "${query}"`,
-            query: query,
-            count: searchResults.length,
-            data: searchResults
+            query,
+            count: places.length,
+            data: places
         });
-
     } catch (error) {
+        console.error('Error in searchPlaces:', error);
         res.status(500).json({
             success: false,
-            message: 'Search failed',
+            message: 'Error searching places',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get street food places
+ * @route GET /api/places/street-food
+ * @access Public
+ */
+export const getStreetFood = async (req, res) => {
+    try {
+        const { lat, lng, radius = 5000 } = req.query;
+
+        // Search for street food specifically
+        const places = await googlePlacesService.textSearch(
+            'street food',
+            parseFloat(lat),
+            parseFloat(lng),
+            parseInt(radius)
+        );
+
+        res.json({
+            success: true,
+            count: places.length,
+            data: places
+        });
+    } catch (error) {
+        console.error('Error in getStreetFood:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching street food places',
             error: error.message
         });
     }

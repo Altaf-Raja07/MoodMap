@@ -48,6 +48,12 @@ Thumbs.db
 .idea/
 *.suo
 *.ntvs*
+
+# =========================
+# Documentation Files
+# =========================
+README.md
+ENHANCEMENT_SUMMARY.md
 *.njsproj
 *.sln
 

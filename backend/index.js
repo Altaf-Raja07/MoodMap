@@ -1,53 +1,105 @@
 // ============================================
-// MOODMAP BACKEND - PRODUCTION STRUCTURE
+// MOODMAP BACKEND - COMPLETE API SERVER
 // ============================================
-// Day 1: Professional Backend Setup
-// - Organized folder structure
-// - Separation of concerns (Routes, Controllers, Middlewares)
-// - Clean and maintainable code
+// A complete mood-based place recommendation backend
+// Features:
+// - User authentication (JWT)
+// - Google Places API integration
+// - Favorites system
+// - Search history tracking
+// - Rate limiting & security
 // ============================================
 
 import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import compression from 'compression';
+
+// Load environment variables first
+dotenv.config();
+
+// Import database connection
+import connectDB from './config/database.js';
 
 // Import custom middlewares
 import { requestLogger } from './middlewares/logger.js';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler.js';
+import corsMiddleware from './middlewares/cors.js';
+import { apiLimiter, authLimiter, placesLimiter } from './middlewares/rateLimiter.js';
+import { sanitize } from './middlewares/sanitization.js';
+import { performanceMonitor, slowRequestWarning } from './middlewares/performanceMonitor.js';
 
 // Import routes
 import healthRoutes from './routes/healthRoutes.js';
-
-// Load environment variables
-dotenv.config();
+import authRoutes from './routes/authRoutes.js';
+import placesRoutes from './routes/placesRoutes.js';
+import favoritesRoutes from './routes/favoritesRoutes.js';
+import reviewsRoutes from './routes/reviewsRoutes.js';
+import analyticsRoutes from './routes/analyticsRoutes.js';
 
 // Create Express app
 const app = express();
 
 // ============================================
-// GLOBAL MIDDLEWARES
+// DATABASE CONNECTION
 // ============================================
-// These run for EVERY request
+connectDB();
 
-// 1. CORS - Allow frontend to communicate
-app.use(cors());
+// ============================================
+// SECURITY MIDDLEWARES
+// ============================================
+app.use(helmet()); // Security headers
+app.use(compression()); // Compress responses
+app.use(corsMiddleware); // CORS with custom config
 
-// 2. JSON Parser - Parse incoming JSON data
-app.use(express.json());
+// ============================================
+// BODY PARSING MIDDLEWARES
+// ============================================
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 3. URL Encoded Parser - Parse form data
-app.use(express.urlencoded({ extended: true }));
-
-// 4. Custom Logger - Log all requests
+// ============================================
+// LOGGING
+// ============================================
 app.use(requestLogger);
+
+// ============================================
+// SANITIZATION & SECURITY
+// ============================================
+app.use(sanitize); // Sanitize all inputs
+
+// ============================================
+// PERFORMANCE MONITORING
+// ============================================
+app.use(performanceMonitor);
+app.use(slowRequestWarning(2000)); // Warn if request takes > 2 seconds
+
+// ============================================
+// RATE LIMITING
+// ============================================
+app.use('/api/', apiLimiter); // General rate limit
 
 // ============================================
 // ROUTES
 // ============================================
-// Mount routes on specific paths
 
 // Health & Status routes
 app.use('/api', healthRoutes);
+
+// Auth routes (with stricter rate limiting)
+app.use('/api/auth', authLimiter, authRoutes);
+
+// Places routes (with places-specific rate limiting)
+app.use('/api/places', placesLimiter, placesRoutes);
+
+// Favorites routes
+app.use('/api/favorites', favoritesRoutes);
+
+// Reviews routes
+app.use('/api/reviews', reviewsRoutes);
+
+// Analytics routes
+app.use('/api/analytics', analyticsRoutes);
 
 // ============================================
 // ERROR HANDLING
