@@ -54,7 +54,7 @@ const placeSchema = new mongoose.Schema({
 
 // Create geospatial index for location-based queries
 placeSchema.index({ location: '2dsphere' });
-placeSchema.index({ placeId: 1 });
+// Note: placeId index is automatically created by unique: true
 placeSchema.index({ matchedMoods: 1 });
 
 export default mongoose.model('Place', placeSchema);

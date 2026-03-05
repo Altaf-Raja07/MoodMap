@@ -1,4 +1,5 @@
 import { Star, MapPin, Clock, Heart } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -24,9 +25,11 @@ export const PlaceCard = ({
   isOpen,
   image,
   tags = [],
+  placeId,
   onViewMap,
   onSave,
 }: PlaceCardProps) => {
+  const navigate = useNavigate();
   const priceIndicator = "₹".repeat(priceLevel);
 
   return (
@@ -52,7 +55,7 @@ export const PlaceCard = ({
         <Button
           variant="glass"
           size="icon"
-          className="absolute top-3 right-3 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute top-3 right-3 rounded-full opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
           onClick={onSave}
         >
           <Heart className="w-4 h-4" />
@@ -98,7 +101,12 @@ export const PlaceCard = ({
             <MapPin className="w-4 h-4 mr-1" />
             View Map
           </Button>
-          <Button variant="default" size="sm" className="flex-1">
+          <Button
+            variant="default"
+            size="sm"
+            className="flex-1"
+            onClick={() => placeId && navigate(`/place/${placeId}/reviews`)}
+          >
             Details
           </Button>
         </div>

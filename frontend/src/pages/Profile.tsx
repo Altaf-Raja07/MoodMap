@@ -1,9 +1,13 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Settings, MapPin, Heart, TrendingUp, Edit2 } from "lucide-react";
+import { User, Settings, MapPin, Heart, TrendingUp, Edit2, LogIn } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import authService from "@/services/authService";
+import favoritesService from "@/services/favoritesService";
 
 const userStats = [
   { label: "Places Visited", value: 24, icon: MapPin },
@@ -25,12 +29,42 @@ const recentMoods = [
 ];
 
 const Profile = () => {
+  const navigate = useNavigate();
+  const currentUser = authService.getCurrentUser();
+  const isLoggedIn = !!currentUser;
+  const [favCount, setFavCount] = useState(0);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      favoritesService.getFavorites().then(favs => setFavCount(favs?.length || 0)).catch(() => {});
+    }
+  }, [isLoggedIn]);
+
+  const stats = [
+    { label: "Favorites Saved", value: favCount, icon: Heart },
+    { label: "Moods Explored", value: 5, icon: TrendingUp },
+    { label: "Places Visited", value: 24, icon: MapPin },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
       <main className="pt-20 pb-12">
         <div className="container mx-auto px-4">
+          {!isLoggedIn ? (
+            <div className="glass-card p-16 text-center max-w-md mx-auto mt-12">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <LogIn className="w-10 h-10 text-primary" />
+              </div>
+              <h2 className="text-xl font-semibold mb-2">Sign in to view your profile</h2>
+              <p className="text-muted-foreground mb-6">Log in to see your stats, favorites, and preferences.</p>
+              <div className="flex gap-3 justify-center">
+                <Button onClick={() => navigate("/login")}>Log In</Button>
+                <Button variant="outline" onClick={() => navigate("/register")}>Sign Up</Button>
+              </div>
+            </div>
+          ) : (<>
           {/* Profile Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -47,15 +81,17 @@ const Profile = () => {
                 </button>
               </div>
               <div className="text-center md:text-left flex-1">
-                <h1 className="text-2xl font-bold text-foreground mb-1">John Doe</h1>
-                <p className="text-muted-foreground mb-3">john.doe@email.com</p>
+                <h1 className="text-2xl font-bold text-foreground mb-1">{currentUser?.name}</h1>
+                <p className="text-muted-foreground mb-3">{currentUser?.email}</p>
                 <div className="flex flex-wrap justify-center md:justify-start gap-2">
                   <Badge variant="secondary">🍽️ Food Explorer</Badge>
                   <Badge variant="secondary">📍 Local Guide</Badge>
-                  <Badge className="bg-accent/20 text-accent border-0">⭐ Premium Member</Badge>
+                  {currentUser?.isEmailVerified && (
+                    <Badge className="bg-success/20 text-success border-0">✔ Verified</Badge>
+                  )}
                 </div>
               </div>
-              <Button variant="outline">
+              <Button variant="outline" onClick={() => navigate('/settings')}>
                 <Settings className="w-4 h-4 mr-2" />
                 Edit Profile
               </Button>
@@ -73,7 +109,7 @@ const Profile = () => {
               >
                 <h2 className="text-xl font-semibold text-foreground mb-4">Your Stats</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {userStats.map((stat, index) => (
+                  {stats.map((stat, index) => (
                     <motion.div
                       key={stat.label}
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -158,6 +194,7 @@ const Profile = () => {
               </div>
             </motion.div>
           </div>
+          </>)}
         </div>
       </main>
 

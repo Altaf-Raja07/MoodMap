@@ -20,7 +20,7 @@ export const requestLogger = (req, res, next) => {
     console.log(`[${timestamp}] ${method} ${url}`);
     
     // If there's a body, log it (useful for POST/PUT requests)
-    if (Object.keys(req.body).length > 0) {
+    if (req.body && Object.keys(req.body).length > 0) {
         console.log('Request Body:', req.body);
     }
     

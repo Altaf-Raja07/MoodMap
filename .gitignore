@@ -53,7 +53,28 @@ Thumbs.db
 # Documentation Files
 # =========================
 README.md
+DEPLOYMENT.md
+SUMMARY.md
+COMMIT_MESSAGES.md
+CHECKLIST.md
+QUICK_REFERENCE.md
+QUICKSTART_LOCAL.md
+QUICKSTART.md
+ERROR_FIXES_REPORT.md
 ENHANCEMENT_SUMMARY.md
+ARCHITECTURE.md
+FEATURES.md
+API_DOCS.md
+BACKEND_COMPLETE.md
+TASKS.md
+frontend/README.md
+backend/README.md
+backend/API_DOCS.md
+backend/ARCHITECTURE.md
+backend/FEATURES.md
+backend/BACKEND_COMPLETE.md
+backend/QUICKSTART.md
+backend/TASKS.md
 *.njsproj
 *.sln
 

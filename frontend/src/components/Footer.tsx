@@ -53,7 +53,7 @@ export const Footer = () => {
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-muted-foreground text-sm">
-            © 2024 MoodMap. All rights reserved.
+            © 2026 MoodMap. All rights reserved.
           </p>
           <p className="text-muted-foreground text-sm flex items-center gap-1">
             Made with <Heart className="w-4 h-4 text-destructive fill-destructive" /> for food lovers

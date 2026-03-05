@@ -9,12 +9,13 @@ import { Navbar } from "@/components/Navbar";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const moods = [
-  { emoji: "💼", label: "Work", description: "Quiet cafés with WiFi" },
-  { emoji: "❤️", label: "Date", description: "Romantic ambience" },
-  { emoji: "🍔", label: "Quick Bite", description: "Fast & nearby" },
-  { emoji: "💸", label: "Budget", description: "Cheap & good" },
-  { emoji: "🍜", label: "Street Food", description: "Local stalls & hubs" },
-  { emoji: "🎉", label: "Hangout", description: "Fun with friends" },
+  { emoji: "💼", label: "Work",        api: "work",        description: "Quiet cafés with WiFi" },
+  { emoji: "❤️", label: "Date",        api: "date",        description: "Romantic ambience" },
+  { emoji: "🍔", label: "Quick Bite",  api: "quick-bite",  description: "Fast & nearby" },
+  { emoji: "💸", label: "Budget",      api: "budget",      description: "Cheap & good" },
+  { emoji: "🍜", label: "Street Food", api: "street-food", description: "Local stalls & hubs" },
+  { emoji: "☕", label: "Chill",       api: "chill",       description: "Relax & unwind" },
+  { emoji: "🎉", label: "Hangout",     api: "hangout",     description: "Fun with friends" },
 ];
 
 const features = [
@@ -153,7 +154,7 @@ const Index = () => {
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               {moods.map((mood, index) => (
-                <Link key={mood.label} to={`/explore?mood=${mood.label.toLowerCase()}`}>
+                <Link key={mood.label} to={`/explore?mood=${mood.api}`}>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -249,7 +250,7 @@ const Index = () => {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-5xl mx-auto">
             {moods.map((mood, index) => (
-              <Link key={mood.label} to={`/explore?mood=${mood.label.toLowerCase()}`}>
+              <Link key={mood.label} to={`/explore?mood=${mood.api}`}>
                 <MoodCard
                   emoji={mood.emoji}
                   label={mood.label}

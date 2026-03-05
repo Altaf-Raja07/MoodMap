@@ -1,7 +1,7 @@
 // ============================================
 // PLACES CONTROLLER - Mood-based recommendations
 // ============================================
-import googlePlacesService from '../services/googlePlacesService.js';
+import placesService from '../services/googlePlacesService.js';
 import Place from '../models/Place.js';
 import User from '../models/User.js';
 
@@ -14,8 +14,8 @@ export const getPlacesByMood = async (req, res) => {
     try {
         const { mood, lat, lng, radius = 5000 } = req.query;
 
-        // Get places from Google Places API
-        const places = await googlePlacesService.searchByMood(
+        // Get places from Foursquare API
+        const places = await placesService.searchByMood(
             mood,
             parseFloat(lat),
             parseFloat(lng),
@@ -63,7 +63,7 @@ export const getNearbyPlaces = async (req, res) => {
     try {
         const { lat, lng, radius = 5000, type = 'restaurant' } = req.query;
 
-        const places = await googlePlacesService.getNearbyPlaces(
+        const places = await placesService.getNearbyPlaces(
             parseFloat(lat),
             parseFloat(lng),
             parseInt(radius),
@@ -97,9 +97,9 @@ export const getPlaceDetails = async (req, res) => {
         // Try to get from cache/database first
         let place = await Place.findOne({ placeId });
 
-        // If not in database, fetch from Google API
+        // If not in database, fetch from Foursquare API
         if (!place) {
-            const placeDetails = await googlePlacesService.getPlaceDetails(placeId);
+            const placeDetails = await placesService.getPlaceDetails(placeId);
             
             // Save to database for future requests
             place = await Place.findOneAndUpdate(
@@ -132,7 +132,7 @@ export const searchPlaces = async (req, res) => {
     try {
         const { query, lat, lng, radius = 5000 } = req.query;
 
-        const places = await googlePlacesService.textSearch(
+        const places = await placesService.textSearch(
             query,
             parseFloat(lat),
             parseFloat(lng),
@@ -165,7 +165,7 @@ export const getStreetFood = async (req, res) => {
         const { lat, lng, radius = 5000 } = req.query;
 
         // Search for street food specifically
-        const places = await googlePlacesService.textSearch(
+        const places = await placesService.textSearch(
             'street food',
             parseFloat(lat),
             parseFloat(lng),

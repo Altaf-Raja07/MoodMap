@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MapPin, Menu, X, User, LogOut, Settings } from "lucide-react";
+import { MapPin, Menu, X, User, LogOut, Settings, BarChart3 } from "lucide-react";
 import { NavLink } from "./NavLink";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./ThemeToggle";
@@ -14,7 +14,7 @@ import {
 import authService from "@/services/authService";
 import { useToast } from "@/hooks/use-toast";
 
-export const Navbar = () => {
+export const NavbarEnhanced = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -25,6 +25,7 @@ export const Navbar = () => {
     { to: "/explore", label: "Explore" },
     { to: "/street-food", label: "Street Food" },
     { to: "/favorites", label: "Favorites", authRequired: true },
+    { to: "/analytics", label: "Analytics", authRequired: true },
   ];
 
   const handleLogout = () => {
@@ -64,6 +65,7 @@ export const Navbar = () => {
                   {link.label}
                 </NavLink>
               ))}
+            
             <ThemeToggle />
 
             {/* Auth Section */}
@@ -86,6 +88,10 @@ export const Navbar = () => {
                   <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <User className="mr-2 h-4 w-4" />
                     Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/analytics')}>
+                    <BarChart3 className="mr-2 h-4 w-4" />
+                    Analytics
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/settings')}>
                     <Settings className="mr-2 h-4 w-4" />
@@ -124,7 +130,7 @@ export const Navbar = () => {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Menu */}
         {isOpen && (
           <div className="md:hidden py-4 border-t border-border/50">
             <div className="flex flex-col gap-2">
@@ -210,3 +216,5 @@ export const Navbar = () => {
     </nav>
   );
 };
+
+export default NavbarEnhanced;
