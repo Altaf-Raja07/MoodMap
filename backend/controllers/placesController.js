@@ -63,6 +63,13 @@ export const getNearbyPlaces = async (req, res) => {
     try {
         const { lat, lng, radius = 5000, type = 'restaurant' } = req.query;
 
+        if (!lat || !lng) {
+            return res.status(400).json({
+                success: false,
+                message: 'Latitude (lat) and longitude (lng) are required'
+            });
+        }
+
         const places = await placesService.getNearbyPlaces(
             parseFloat(lat),
             parseFloat(lng),
@@ -97,21 +104,42 @@ export const getPlaceDetails = async (req, res) => {
         // Try to get from cache/database first
         let place = await Place.findOne({ placeId });
 
-        // If not in database, fetch from Foursquare API
+        // If not in database, fetch from API
         if (!place) {
             const placeDetails = await placesService.getPlaceDetails(placeId);
-            
+
+            // Transform location from { lat, lng } to GeoJSON Point for MongoDB
+            const placeDataForDB = {
+                ...placeDetails,
+                location: {
+                    type: 'Point',
+                    coordinates: [placeDetails.location.lng, placeDetails.location.lat]
+                }
+            };
+
             // Save to database for future requests
             place = await Place.findOneAndUpdate(
                 { placeId },
-                placeDetails,
+                placeDataForDB,
                 { upsert: true, new: true }
             );
+
+            // Return the original formatted data (not GeoJSON) to the client
+            return res.json({
+                success: true,
+                data: placeDetails
+            });
         }
 
         res.json({
             success: true,
-            data: place
+            data: {
+                ...place.toObject(),
+                location: {
+                    lat: place.location?.coordinates?.[1] ?? 0,
+                    lng: place.location?.coordinates?.[0] ?? 0
+                }
+            }
         });
     } catch (error) {
         console.error('Error in getPlaceDetails:', error);
@@ -163,6 +191,13 @@ export const searchPlaces = async (req, res) => {
 export const getStreetFood = async (req, res) => {
     try {
         const { lat, lng, radius = 5000 } = req.query;
+
+        if (!lat || !lng) {
+            return res.status(400).json({
+                success: false,
+                message: 'Latitude (lat) and longitude (lng) are required'
+            });
+        }
 
         // Search for street food specifically
         const places = await placesService.textSearch(

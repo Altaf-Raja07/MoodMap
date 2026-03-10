@@ -15,12 +15,17 @@ export const sanitizeInput = (input) => {
         .trim();
 };
 
+// Fields that must never be sanitized (passwords, tokens)
+const SENSITIVE_FIELDS = new Set(['password', 'currentPassword', 'newPassword', 'confirmPassword', 'token']);
+
 /**
  * Middleware to sanitize request body
  */
 export const sanitizeBody = (req, res, next) => {
     if (req.body && typeof req.body === 'object') {
         Object.keys(req.body).forEach(key => {
+            // Skip sensitive fields – never alter password values
+            if (SENSITIVE_FIELDS.has(key)) return;
             if (typeof req.body[key] === 'string') {
                 req.body[key] = sanitizeInput(req.body[key]);
             } else if (Array.isArray(req.body[key])) {

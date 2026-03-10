@@ -31,8 +31,13 @@ const Login = () => {
       await authService.login(formData.email, formData.password);
       navigate("/explore");
     } catch (err: any) {
-      const message = err.response?.data?.message || "Login failed. Please try again.";
-      setError(message);
+      if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.request) {
+        setError("Cannot connect to server. Please make sure the backend is running on port 4000.");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

@@ -430,6 +430,46 @@ export const updateProfile = async (req, res) => {
 };
 
 /**
+ * Resend email verification
+ * @route POST /api/auth/resend-verification
+ * @access Private
+ */
+export const resendVerification = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (user.isEmailVerified) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email is already verified'
+            });
+        }
+
+        // Generate a new verification token
+        const verificationToken = user.getEmailVerificationToken();
+        await user.save({ validateBeforeSave: false });
+
+        try {
+            await emailService.sendVerificationEmail(user.email, user.name, verificationToken);
+        } catch (emailError) {
+            console.error('Email sending failed:', emailError);
+        }
+
+        res.json({
+            success: true,
+            message: 'Verification email sent. Please check your inbox.'
+        });
+    } catch (error) {
+        console.error('Resend verification error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error sending verification email',
+            error: error.message
+        });
+    }
+};
+
+/**
  * Change password
  * @route PUT /api/auth/change-password
  * @access Private

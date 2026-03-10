@@ -12,7 +12,8 @@ import {
     forgotPassword,
     resetPassword,
     updateProfile,
-    changePassword
+    changePassword,
+    resendVerification
 } from '../controllers/authController.js';
 import { protect } from '../middlewares/auth.js';
 import {
@@ -57,5 +58,8 @@ router.put('/preferences', protect, validatePreferences, validate, updatePrefere
 
 // GET /api/auth/history - Get search history
 router.get('/history', protect, getSearchHistory);
+
+// POST /api/auth/resend-verification - Resend email verification
+router.post('/resend-verification', protect, resendVerification);
 
 export default router;

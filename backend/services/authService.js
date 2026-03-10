@@ -48,6 +48,7 @@ class AuthService {
                 id: user._id,
                 name: user.name,
                 email: user.email,
+                isEmailVerified: user.isEmailVerified,
                 preferences: user.preferences,
                 createdAt: user.createdAt
             }

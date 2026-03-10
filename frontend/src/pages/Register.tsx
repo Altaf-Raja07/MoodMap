@@ -51,7 +51,17 @@ const Register = () => {
       setSuccess(response.message || "Registration successful! Redirecting...");
       setTimeout(() => navigate("/explore"), 2000);
     } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
+      // Show field-level validation errors if available, otherwise show general message
+      if (err.response?.data?.errors?.length) {
+        const messages = err.response.data.errors.map((e: any) => e.message).join(", ");
+        setError(messages);
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err.request) {
+        setError("Cannot connect to server. Please make sure the backend is running on port 4000.");
+      } else {
+        setError("Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
